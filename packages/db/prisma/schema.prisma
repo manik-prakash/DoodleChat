@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  rooms        Room[]   @relation("roomOwner")
+  chats        Chat[]   @relation("messageID")
+}
+
+model Room {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  ownerId   String
+
+  owner User   @relation("roomOwner", fields: [ownerId], references: [id])
+  chats Chat[] @relation("roomChats")
+}
+
+model Chat {
+  id      Int    @id @default(autoincrement())
+  message String
+  userId  String
+  roomId  Int
+  room    Room   @relation("roomChats", fields: [roomId], references: [id])
+  user    User   @relation("messageID", fields: [userId], references: [id])
+}
