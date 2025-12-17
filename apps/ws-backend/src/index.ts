@@ -7,7 +7,7 @@ const secret = process.env.JWT_SECRET_WORD;
 if (!secret) {
   throw new Error("JWT_SECRET_WORD must be defined in environment variables");
 }
-
+console.log(process.env.DATABASE_URL);
 const wss = new WebSocketServer({ port: 8080 });
 console.log(`WebSocket server running on port 8080`);
 
