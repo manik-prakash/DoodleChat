@@ -8,7 +8,7 @@ export default function Home() {
       {/* Floating Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-xl font-bold gradient-text">DrawChat</div>
+          <div className="text-xl font-bold gradient-text">DoodleChat</div>
           <Link href="/login">
             <Button variant="ghost" className="text-foreground hover:bg-secondary">
               Login
@@ -119,7 +119,7 @@ export default function Home() {
                 Terms
               </Link>
             </div>
-            <p className="text-sm text-muted-foreground">Built with ❤️ using Next.js & WebSockets</p>
+            <p className="text-sm text-muted-foreground">Built with ❤️ by Manik.</p>
           </div>
         </div>
       </footer>

@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/controllers/authcontroller.ts","./src/controllers/chatcontroller.ts","./src/controllers/roomcontroller.ts","./src/controllers/shapecontroller.ts","./src/middlewares/auth.ts","./src/routes/authroute.ts","./src/routes/chatroute.ts","./src/routes/roomroute.ts","./src/routes/shaperoute.ts"],"errors":true,"version":"5.9.2"}

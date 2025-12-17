@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/components/ui/button"
@@ -10,6 +9,10 @@ import { Label } from "@/components/components/ui/label"
 import { Checkbox } from "@/components/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
+import axios from "axios"
+import { saveToken } from "@/lib/auth"
+
+const API_URL = "http://localhost:3001"
 
 export function LoginForm() {
   const router = useRouter()
@@ -27,12 +30,24 @@ export function LoginForm() {
     setError("")
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const response = await axios.post(`${API_URL}/auth/signin`, {
+        email: formData.email,
+        password: formData.password,
+      })
 
-    // For demo purposes, any login succeeds
-    setIsLoading(false)
-    router.push("/rooms")
+      if (response.data.token) {
+        saveToken(response.data.token)
+        router.push("/rooms")
+      } else {
+        setError(response.data.message || "Login failed")
+      }
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Login failed. Please try again."
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

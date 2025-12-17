@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "@repo/db";
+import prisma  from "@repo/db/client";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { signinSchema, signupSchema } from "@repo/common/types";
@@ -24,7 +24,7 @@ export const signin = async (
     req: Request<{}, {}, SigninBody>,
     res: Response,
     next: NextFunction
-) :Promise<any> => {
+): Promise<any> => {
     try {
         const parsedData = signinSchema.safeParse(req.body);
         if (!parsedData.success) {
@@ -51,7 +51,7 @@ export const signin = async (
         }
 
         const token = jwt.sign(
-            { userID: user.id, email: user.email },
+            { userID: user.id, email: user.email, username: user.username },
             secret,
             { expiresIn: "4h" }
         );
@@ -69,7 +69,7 @@ export const signup = async (
     req: Request<{}, {}, SignupBody>,
     res: Response,
     next: NextFunction
-) :Promise<any> => {
+): Promise<any> => {
     try {
         const parsedData = signupSchema.safeParse(req.body);
         if (!parsedData.success) {
@@ -101,7 +101,7 @@ export const signup = async (
         });
 
         const token = jwt.sign(
-            { userID: newUser.id, email: newUser.email },
+            { userID: newUser.id, email: newUser.email, username: newUser.username },
             secret,
             { expiresIn: "4h" }
         );

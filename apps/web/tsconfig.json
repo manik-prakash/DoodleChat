@@ -8,8 +8,20 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@/*": [
+        "./*"
+      ],
       "@/components/*": [
         "components/*"
+      ],
+      "@/lib/*": [
+        "lib/*"
+      ],
+      "@/draw/*": [
+        "draw/*"
+      ],
+      "@/app/*": [
+        "app/*"
       ]
     }
   },

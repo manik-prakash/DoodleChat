@@ -9,6 +9,10 @@ import { Label } from "@/components/components/ui/label"
 import { Checkbox } from "@/components/components/ui/checkbox"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
+import axios from "axios"
+import { saveToken } from "@/lib/auth"
+
+const API_URL = "http://localhost:3001"
 
 export function SignupForm() {
   const router = useRouter()
@@ -18,7 +22,7 @@ export function SignupForm() {
   const [error, setError] = useState("")
   const [passwordStrength, setPasswordStrength] = useState(0)
   const [formData, setFormData] = useState({
-    fullName: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -69,11 +73,25 @@ export function SignupForm() {
 
     setIsLoading(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const response = await axios.post(`${API_URL}/auth/signup`, {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      })
 
-    setIsLoading(false)
-    router.push("/rooms")
+      if (response.data.token) {
+        saveToken(response.data.token)
+        router.push("/rooms")
+      } else {
+        setError(response.data.message || "Signup failed")
+      }
+    } catch (err: any) {
+      const message = err.response?.data?.message || "Signup failed. Please try again."
+      setError(message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -84,15 +102,15 @@ export function SignupForm() {
         </div>
       )}
 
-      {/* Full Name Field */}
+      {/* Username Field */}
       <div className="space-y-2">
-        <Label htmlFor="fullName">Full Name</Label>
+        <Label htmlFor="username">Username</Label>
         <Input
-          id="fullName"
+          id="username"
           type="text"
-          placeholder="John Doe"
-          value={formData.fullName}
-          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+          placeholder="johndoe"
+          value={formData.username}
+          onChange={(e) => setFormData({ ...formData, username: e.target.value })}
           className="bg-input border-border focus:border-primary transition-colors"
           required
         />
@@ -140,9 +158,8 @@ export function SignupForm() {
               {[1, 2, 3, 4].map((level) => (
                 <div
                   key={level}
-                  className={`h-1 flex-1 rounded-full transition-colors ${
-                    level <= passwordStrength ? getStrengthColor() : "bg-border"
-                  }`}
+                  className={`h-1 flex-1 rounded-full transition-colors ${level <= passwordStrength ? getStrengthColor() : "bg-border"
+                    }`}
                 />
               ))}
             </div>

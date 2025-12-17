@@ -4,16 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build":"tsc -b",
-    "start":"node ./dist/index.js",
-    "dev":"pnpm run build && pnpm run start" ,
+    "build": "tsc -b",
+    "start": "node ./dist/index.js",
+    "dev": "pnpm run build && pnpm run start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@repo/common":"workspace:*",
+    "@repo/common": "workspace:*",
     "@repo/db": "workspace:*",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -22,7 +22,8 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"

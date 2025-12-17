@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -14,25 +13,47 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  rooms        Room[]   @relation("roomOwner")
-  chats        Chat[]   @relation("messageID")
+
+  ownedRooms Room[] @relation("RoomOwner")
+  chats      Chat[]
+  shapes     Shape[]
 }
 
 model Room {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   slug      String   @unique
+  ownerId  String
   createdAt DateTime @default(now())
-  ownerId   String
 
-  owner User   @relation("roomOwner", fields: [ownerId], references: [id])
-  chats Chat[] @relation("roomChats")
+  owner  User    @relation("RoomOwner", fields: [ownerId], references: [id])
+  chats  Chat[]
+  shapes Shape[]
+
 }
 
+
 model Chat {
-  id      Int    @id @default(autoincrement())
-  message String
-  userId  String
-  roomId  Int
-  room    Room   @relation("roomChats", fields: [roomId], references: [id])
-  user    User   @relation("messageID", fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  message   String
+  userId   String
+  roomId   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  room Room @relation(fields: [roomId], references: [id])
+
+}
+
+model Shape {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+
+  data      Json
+
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
 }

@@ -1,0 +1,207 @@
+"use client";
+
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { RoomLayout } from "./RoomLayout";
+import { ChatPanel } from "./ChatPanel";
+import { Tool } from "./RoomNavbar";
+import { Game } from "@/draw/Game";
+import { getToken, isAuthenticated, getUser } from "@/lib/auth";
+import { Loader2 } from "lucide-react";
+
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080';
+
+interface ChatMessage {
+    id: string;
+    message: string;
+    username: string;
+    userId: string;
+    createdAt: string;
+}
+
+interface RoomInfo {
+    id: string;
+    slug: string;
+    ownerId: string;
+}
+
+export function RoomCanvas({ roomId }: { roomId: string }) {
+    const router = useRouter();
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [game, setGame] = useState<Game | null>(null);
+    const [selectedTool, setSelectedTool] = useState<Tool>("circle");
+    const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+    const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    const user = getUser();
+    const currentUserId = user?.id;
+    const isOwner = roomInfo?.ownerId === currentUserId;
+
+    // Handle incoming chat messages
+    const handleChatMessage = useCallback((message: any) => {
+        const newMessage: ChatMessage = {
+            id: message.id || Date.now().toString(),
+            message: message.message,
+            username: message.username,
+            userId: message.userId,
+            createdAt: message.createdAt || new Date().toISOString()
+        };
+        setChatMessages(prev => [...prev, newMessage]);
+    }, []);
+
+    // Check auth and fetch room info
+    useEffect(() => {
+        if (!isAuthenticated()) {
+            router.push("/login");
+            return;
+        }
+
+        // Fetch room info
+        const fetchRoom = async () => {
+            try {
+                // We have room ID, need to get room details
+                // For now, we'll set basic info
+                setRoomInfo({
+                    id: roomId,
+                    slug: roomId.substring(0, 6).toUpperCase(),
+                    ownerId: "" // Will be updated when available
+                });
+            } catch (err) {
+                console.error("Failed to fetch room:", err);
+            }
+        };
+
+        fetchRoom();
+    }, [roomId, router]);
+
+    // Connect to WebSocket
+    useEffect(() => {
+        if (!isAuthenticated()) return;
+
+        const token = getToken();
+        if (!token) {
+            setError("Not authenticated");
+            setIsLoading(false);
+            return;
+        }
+
+        const ws = new WebSocket(`${WS_URL}?token=${token}`);
+
+        ws.onopen = () => {
+            console.log("WebSocket connected");
+            setSocket(ws);
+
+            // Join the room
+            ws.send(JSON.stringify({
+                type: "join_room",
+                roomId
+            }));
+        };
+
+        ws.onerror = (event) => {
+            console.error("WebSocket error:", event);
+            setError("Failed to connect to server");
+            setIsLoading(false);
+        };
+
+        ws.onclose = () => {
+            console.log("WebSocket disconnected");
+            setSocket(null);
+        };
+
+        return () => {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: "leave_room",
+                    roomId
+                }));
+                ws.close();
+            }
+        };
+    }, [roomId]);
+
+    // Initialize game when socket and canvas are ready
+    useEffect(() => {
+        if (socket && canvasRef.current && !game) {
+            const g = new Game(canvasRef.current, roomId, socket, handleChatMessage);
+            setGame(g);
+            setIsLoading(false);
+
+            return () => {
+                g.destroy();
+            };
+        }
+    }, [socket, roomId, handleChatMessage, game]);
+
+    // Update tool when changed
+    useEffect(() => {
+        game?.setTool(selectedTool);
+    }, [selectedTool, game]);
+
+    // Handle sending chat messages
+    const handleSendMessage = (message: string) => {
+        if (game && socket?.readyState === WebSocket.OPEN) {
+            game.sendChatMessage(message);
+        }
+    };
+
+    // Handle clear canvas
+    const handleClearCanvas = () => {
+        if (game && socket?.readyState === WebSocket.OPEN) {
+            game.clearAllShapes();
+        }
+    };
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-destructive mb-4">{error}</p>
+                    <button
+                        onClick={() => router.push("/rooms")}
+                        className="text-primary hover:underline"
+                    >
+                        Back to Rooms
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (isLoading || !socket) {
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                <p className="text-muted-foreground">Connecting to room...</p>
+            </div>
+        );
+    }
+
+    return (
+        <RoomLayout
+            roomSlug={roomInfo?.slug}
+            selectedTool={selectedTool}
+            onToolChange={setSelectedTool}
+            onClearCanvas={handleClearCanvas}
+            isOwner={isOwner}
+            canvasElement={
+                <canvas
+                    ref={canvasRef}
+                    width={typeof window !== 'undefined' ? window.innerWidth - 320 : 800}
+                    height={typeof window !== 'undefined' ? window.innerHeight - 56 : 600}
+                    className="block"
+                />
+            }
+            chatElement={
+                <ChatPanel
+                    messages={chatMessages}
+                    onSendMessage={handleSendMessage}
+                    currentUserId={currentUserId}
+                />
+            }
+        />
+    );
+}

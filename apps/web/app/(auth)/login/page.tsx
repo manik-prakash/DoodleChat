@@ -8,7 +8,7 @@ export default function LoginPage() {
         {/* Logo/App Name */}
         <div className="text-center mb-8">
           <Link href="/" className="text-3xl font-bold gradient-text inline-block">
-            DrawChat
+            DoodleChat
           </Link>
         </div>
 
