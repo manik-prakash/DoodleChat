@@ -76,7 +76,7 @@ export function ChatPanel({ messages, onSendMessage, currentUserId }: ChatPanelP
                                         {msg.username}
                                     </p>
                                 )}
-                                <p className="text-sm break-words">{msg.message}</p>
+                                <p className="text-sm wrap-break-word">{msg.message}</p>
                             </div>
                             <span className="text-[10px] text-muted-foreground mt-1 px-1">
                                 {formatTime(msg.createdAt)}

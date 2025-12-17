@@ -23,7 +23,7 @@ type Shape = {
 export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     const ctx = canvas.getContext("2d");
 
-    let existingShapes: Shape[] = await getExistingShapes(roomId)
+    const existingShapes: Shape[] = await getExistingShapes(roomId)
 
     if (!ctx) {
         return
@@ -56,7 +56,7 @@ export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket
         const width = e.clientX - startX;
         const height = e.clientY - startY;
 
-        // @ts-ignore
+        // @ts-expect-error
         const selectedTool = window.selectedTool;
         let shape: Shape | null = null;
         if (selectedTool === "rect") {

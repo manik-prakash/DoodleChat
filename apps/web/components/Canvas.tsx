@@ -11,9 +11,7 @@ interface CanvasProps {
     roomId: string;
 }
 
-/**
- * @deprecated Use RoomCanvas component instead which includes RoomLayout
- */
+
 export function Canvas({ roomId, socket }: CanvasProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [game, setGame] = useState<Game>();

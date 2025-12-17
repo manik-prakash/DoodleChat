@@ -12,7 +12,7 @@ import {
     Settings,
     Circle,
     Square as RectangleIcon,
-    Pencil,
+    Minus ,
     Trash2,
     ArrowLeft
 } from "lucide-react"
@@ -48,7 +48,7 @@ export function RoomNavbar({
     }
 
     const tools: { id: Tool; icon: React.ReactNode; label: string }[] = [
-        { id: "pencil", icon: <Pencil className="w-5 h-5" />, label: "Pencil" },
+        { id: "pencil", icon: <Minus  className="w-5 h-5" />, label: "Pencil" },
         { id: "rect", icon: <RectangleIcon className="w-5 h-5" />, label: "Rectangle" },
         { id: "circle", icon: <Circle className="w-5 h-5" />, label: "Circle" },
     ]
