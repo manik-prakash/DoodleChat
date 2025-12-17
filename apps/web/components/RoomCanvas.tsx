@@ -34,6 +34,7 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
     const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [roomJoined, setRoomJoined] = useState(false);
     const [error, setError] = useState("");
 
     const user = getUser();
@@ -52,30 +53,13 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
         setChatMessages(prev => [...prev, newMessage]);
     }, []);
 
-    // Check auth and fetch room info
+    // Check auth
     useEffect(() => {
         if (!isAuthenticated()) {
             router.push("/login");
             return;
         }
-
-        // Fetch room info
-        const fetchRoom = async () => {
-            try {
-                // We have room ID, need to get room details
-                // For now, we'll set basic info
-                setRoomInfo({
-                    id: roomId,
-                    slug: roomId.substring(0, 6).toUpperCase(),
-                    ownerId: "" // Will be updated when available
-                });
-            } catch (err) {
-                console.error("Failed to fetch room:", err);
-            }
-        };
-
-        fetchRoom();
-    }, [roomId, router]);
+    }, [router]);
 
     // Connect to WebSocket
     useEffect(() => {
@@ -89,16 +73,51 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
         }
 
         const ws = new WebSocket(`${WS_URL}?token=${token}`);
+        let joinTimeout: NodeJS.Timeout;
 
         ws.onopen = () => {
             console.log("WebSocket connected");
             setSocket(ws);
 
             // Join the room
+            console.log("Sending join_room for:", roomId);
             ws.send(JSON.stringify({
                 type: "join_room",
                 roomId
             }));
+
+            // Fallback: if no room_joined confirmation after 2 seconds, proceed anyway
+            joinTimeout = setTimeout(() => {
+                console.log("Join timeout - proceeding without confirmation");
+                setRoomJoined(true);
+                setIsLoading(false);
+            }, 2000);
+        };
+
+        // Handle initial messages (before Game takes over)
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            console.log("WebSocket message received:", message);
+
+            if (message.type === "room_joined") {
+                console.log("Room joined successfully:", message.roomId);
+                clearTimeout(joinTimeout);
+                // Set room info from the server response
+                setRoomInfo({
+                    id: message.roomId,
+                    slug: message.slug,
+                    ownerId: message.ownerId
+                });
+                setRoomJoined(true);
+                setIsLoading(false);
+            } else if (message.type === "error") {
+                console.error("WebSocket error:", message.message);
+                clearTimeout(joinTimeout);
+                if (message.message === "Room not found") {
+                    setError("Room not found");
+                    setIsLoading(false);
+                }
+            }
         };
 
         ws.onerror = (event) => {
@@ -110,6 +129,7 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
         ws.onclose = () => {
             console.log("WebSocket disconnected");
             setSocket(null);
+            setRoomJoined(false);
         };
 
         return () => {
@@ -123,18 +143,25 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
         };
     }, [roomId]);
 
-    // Initialize game when socket and canvas are ready
+    // Initialize game when socket is ready AND room is joined
     useEffect(() => {
-        if (socket && canvasRef.current && !game) {
+        if (socket && canvasRef.current && roomJoined) {
+            console.log("Creating Game instance for canvas:", canvasRef.current);
+
+            // Destroy existing game if any
+            if (game) {
+                game.destroy();
+            }
+
             const g = new Game(canvasRef.current, roomId, socket, handleChatMessage);
             setGame(g);
-            setIsLoading(false);
 
             return () => {
                 g.destroy();
             };
         }
-    }, [socket, roomId, handleChatMessage, game]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket, roomId, roomJoined]); // Removed game from deps to allow recreation
 
     // Update tool when changed
     useEffect(() => {
@@ -143,14 +170,14 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
 
     // Handle sending chat messages
     const handleSendMessage = (message: string) => {
-        if (game && socket?.readyState === WebSocket.OPEN) {
+        if (game && socket?.readyState === WebSocket.OPEN && roomJoined) {
             game.sendChatMessage(message);
         }
     };
 
     // Handle clear canvas
     const handleClearCanvas = () => {
-        if (game && socket?.readyState === WebSocket.OPEN) {
+        if (game && socket?.readyState === WebSocket.OPEN && roomJoined) {
             game.clearAllShapes();
         }
     };
@@ -171,7 +198,7 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
         );
     }
 
-    if (isLoading || !socket) {
+    if (isLoading || !socket || !roomJoined) {
         return (
             <div className="min-h-screen flex items-center justify-center flex-col gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -192,7 +219,9 @@ export function RoomCanvas({ roomId }: { roomId: string }) {
                     ref={canvasRef}
                     width={typeof window !== 'undefined' ? window.innerWidth - 320 : 800}
                     height={typeof window !== 'undefined' ? window.innerHeight - 56 : 600}
-                    className="block"
+                    className="block absolute inset-0 cursor-crosshair"
+                    style={{ touchAction: 'none' }}
+                    onClick={(e) => console.log("[Canvas] Direct click at:", e.clientX, e.clientY)}
                 />
             }
             chatElement={

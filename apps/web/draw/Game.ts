@@ -115,6 +115,7 @@ export class Game {
         this.clicked = true;
         this.startX = e.clientX;
         this.startY = e.clientY - 56; // Account for navbar height
+        console.log("[Game] mouseDown:", { x: this.startX, y: this.startY, tool: this.selectedTool });
     };
 
     mouseUpHandler = (e: MouseEvent) => {
@@ -123,6 +124,8 @@ export class Game {
         const endY = e.clientY - 56; // Account for navbar height
         const width = endX - this.startX;
         const height = endY - this.startY;
+
+        console.log("[Game] mouseUp:", { endX, endY, width, height, tool: this.selectedTool });
 
         const selectedTool = this.selectedTool;
         let shape: ShapeData | null = null;
@@ -154,13 +157,16 @@ export class Game {
         }
 
         if (!shape) {
+            console.log("[Game] No shape created");
             return;
         }
 
+        console.log("[Game] Created shape:", shape);
         this.existingShapes.push(shape);
         this.clearCanvas();
 
         // Send as 'draw' type to WebSocket
+        console.log("[Game] Sending draw to websocket");
         this.socket.send(JSON.stringify({
             type: "draw",
             shape,
@@ -203,9 +209,12 @@ export class Game {
     };
 
     initMouseHandlers() {
+        console.log("[Game] initMouseHandlers - canvas:", this.canvas);
+        console.log("[Game] initMouseHandlers - canvas dimensions:", this.canvas.width, "x", this.canvas.height);
         this.canvas.addEventListener("mousedown", this.mouseDownHandler);
         this.canvas.addEventListener("mouseup", this.mouseUpHandler);
         this.canvas.addEventListener("mousemove", this.mouseMoveHandler);
+        console.log("[Game] Mouse handlers attached");
     }
 
     // Public method to send chat messages
