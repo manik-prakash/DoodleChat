@@ -29,7 +29,7 @@ export const signin = async (
         const parsedData = signinSchema.safeParse(req.body);
         if (!parsedData.success) {
             console.log(parsedData.error);
-            res.json({
+            res.status(400).json({
                 message: "Incorrect inputs"
             })
             return;
@@ -74,7 +74,7 @@ export const signup = async (
         const parsedData = signupSchema.safeParse(req.body);
         if (!parsedData.success) {
             console.log(parsedData.error);
-            res.json({
+            res.status(400).json({
                 message: "Incorrect inputs"
             })
             return;

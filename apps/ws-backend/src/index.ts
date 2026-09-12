@@ -301,7 +301,7 @@ async function processMessage(ws: WebSocket, user: User, dataStr: string) {
           username: user.username,
           roomId,
           createdAt: savedShape.createdAt
-        });
+        }, ws);
 
         break;
       }

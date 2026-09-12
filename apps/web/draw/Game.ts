@@ -43,7 +43,15 @@ export class Game {
     }
 
     async init() {
-        this.existingShapes = await getExistingShapes(this.roomId);
+        const fetchedShapes = await getExistingShapes(this.roomId);
+
+        // Merge instead of overwrite: shapes broadcast over the socket while this
+        // fetch was in flight are already in this.existingShapes and must not be
+        // dropped. Dedupe by id in case the fetch's DB snapshot already included them.
+        const fetchedIds = new Set(fetchedShapes.map((s) => s.id).filter(Boolean));
+        const liveOnly = this.existingShapes.filter((s) => !s.id || !fetchedIds.has(s.id));
+        this.existingShapes = [...fetchedShapes, ...liveOnly];
+
         console.log("Loaded shapes:", this.existingShapes);
         this.clearCanvas();
     }
@@ -54,7 +62,7 @@ export class Game {
 
             // Handle draw messages (shapes)
             if (message.type === "draw") {
-                this.existingShapes.push(message.shape);
+                this.existingShapes.push({ ...message.shape, id: message.id });
                 this.clearCanvas();
             }
 
