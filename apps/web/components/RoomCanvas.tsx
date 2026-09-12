@@ -7,9 +7,8 @@ import { ChatPanel } from "./ChatPanel";
 import { Tool } from "./RoomNavbar";
 import { Game } from "@/draw/Game";
 import { getToken, isAuthenticated, getUser } from "@/lib/auth";
+import { WS_URL } from "@/lib/config";
 import { Loader2 } from "lucide-react";
-
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080';
 
 interface ChatMessage {
     id: string;

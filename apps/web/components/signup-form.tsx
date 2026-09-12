@@ -11,8 +11,7 @@ import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import axios from "axios"
 import { saveToken } from "@/lib/auth"
-
-const API_URL = "http://localhost:3001"
+import { API_URL } from "@/lib/config"
 
 export function SignupForm() {
   const router = useRouter()

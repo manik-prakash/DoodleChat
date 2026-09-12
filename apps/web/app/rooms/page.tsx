@@ -8,8 +8,7 @@ import { Button } from "@/components/components/ui/button"
 import { Input } from "@/components/components/ui/input"
 import { Plus, DoorOpen, LogOut, Loader2 } from "lucide-react"
 import { isAuthenticated, logout, getToken } from "@/lib/auth"
-
-const API_URL = "http://localhost:3001"
+import { API_URL } from "@/lib/config"
 
 export default function RoomsPage() {
   const router = useRouter()
